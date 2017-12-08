@@ -1,10 +1,11 @@
 const path = require('path')
-const {app, BrowserWindow} = require('electron')
+const {app, protocol, BrowserWindow} = require('electron')
 const menus = require('./menus')
 const config = require('./config')
 const createRPC = require('./rpc')
 
 const windows = new Set([])
+const DAT_PREFIX = 'dat'
 let focused = null
 
 function init () {
@@ -61,7 +62,7 @@ function create (url, target) {
     darkTheme: true,
     webPreferences: {
     },
-    fullscreenable: !config.getPreference('picture_in_picture')
+    fullscreenable: !config.getPreference('picture_in_picture'),
   }
 
   const win = new BrowserWindow(browserOptions)
@@ -76,8 +77,21 @@ function create (url, target) {
   win.darkTheme = true
   win.hasTitleBar = config.getPreference('show_title_bar')
   win.hasConsole = false
+  win.isRequestMobile = config.getPreference('request_mobile_site')
 
   win.loadURL(path.join('file://', __dirname, '/window.html'))
+
+  protocol.registerHttpProtocol(DAT_PREFIX, (req, cb) => {
+    const url = path.join('file://', __dirname, '/dat.html')
+    win.show()
+    if (url) {
+      win.rpc.emit('view:load', url)
+      win.rpc.emit('status:log', {
+        body: 'Loading ' + url
+      })
+    }
+    console.log('full url to open ' + req.url)
+  })
 
   win.on('focus', (e) => {
     focused = e.sender
@@ -108,6 +122,11 @@ function create (url, target) {
     win.setTitle(e)
   })
 
+  rpc.on('view:toggle-mobile-updated', (e) => {
+    win.isRequestMobile = e
+    menus.refresh()
+  })
+
   win.once('ready-to-show', () => {
     win.show()
     if (url) {
@@ -117,6 +136,10 @@ function create (url, target) {
       })
     }
   })
+
+  if (isDev()) {
+    win.webContents.openDevTools()
+  }
 }
 
 function broadcast (data) {
@@ -191,6 +214,10 @@ function resize (width, height) {
 
 function getFocused () {
   return focused
+}
+
+function isDev () {
+  return process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath)
 }
 
 module.exports = {

@@ -12,17 +12,18 @@
     "app": "electron app",
     "dev": "webpack -w",
     "build": "NODE_ENV='production' webpack -p && cd app && npm i",
-    "package": "npm run build && electron-packager app --overwrite --prune --out=build --platform=darwin --arch=x64 --icon=icon.icns && npm run clean",
+    "package": "npm run build && electron-packager app --overwrite --prune --out=build --platform=darwin --arch=x64 --icon=icon.icns --protocol=dat && npm run clean",
     "test": "standard --fix",
     "clean": "rm -rf app/node_modules && rm -rf app/dist",
     "prepush": "npm test"
   },
   "dependencies": {
+    "dat-dns": "^2.0.0",
     "png-chunk-text": "^1.0.0",
     "png-chunks-encode": "^1.0.0",
     "png-chunks-extract": "^1.0.0",
-    "uuid": "^3.1.0",
     "request": "^2.75.0",
+    "uuid": "^3.1.0",
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
